@@ -12,7 +12,7 @@ all: build
 
 # Build the executable
 build:
-	deno compile --allow-net --allow-read --output $(APP_NAME) $(ENTRY_POINT)
+	deno compile --allow-all --output $(APP_NAME) $(ENTRY_POINT)
 
 # Run the compiled application
 run: build
@@ -20,7 +20,7 @@ run: build
 
 # Start the application using deno run
 start:
-	deno run --allow-net --allow-read $(ENTRY_POINT) --host $(HOST) --port $(PORT) --dir $(DIR)
+	deno run --allow-all $(ENTRY_POINT) --host $(HOST) --port $(PORT) --dir $(DIR)
 
 # Run tests
 test:
