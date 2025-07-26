@@ -33,9 +33,105 @@ Options:
   Deno.exit(0);
 }
 
+function jsonToHtml(data: any, indentLevel = 0, createLinks = true): string {
+  const indent = '  '.repeat(indentLevel);
+  const nextIndent = '  '.repeat(indentLevel + 1);
+
+  if (data === null) {
+    return '<span class="json-null">null</span>';
+  }
+
+  switch (typeof data) {
+    case 'string':
+      return createLinks ? `<a href="${data}"><span class="json-string">"${data}"</span></a>` : `<span class="json-string">"${data}"</span>`;
+    case 'number':
+      return createLinks ? `<a href="${String(data)}"><span class="json-number">${String(data)}</span></a>` : `<span class="json-number">${String(data)}</span>`;
+    case 'boolean':
+      return createLinks ? `<a href="${String(data)}"><span class="json-boolean">${String(data)}</span></a>` : `<span class="json-boolean">${String(data)}</span>`;
+    case 'object':
+      if (Array.isArray(data)) {
+        if (data.length === 0) {
+          return '[]';
+        }
+        const items = data
+          .map(item => `${nextIndent}${jsonToHtml(item, indentLevel + 1, createLinks)}`)
+          .join(',\n');
+        return `[\n${items}\n${indent}]`;
+      }
+      if (data !== null) {
+        const entries = Object.entries(data);
+        if (entries.length === 0) {
+          return '{}';
+        }
+        const items = entries
+          .map(([key, value]) => `${nextIndent}<span class="json-key">"${key}"</span>: ${jsonToHtml(value, indentLevel + 1, createLinks)}`)
+          .join(',\n');
+        return `{\n${items}\n${indent}}`;
+      }
+      return '<span class="json-null">null</span>';
+    default:
+      return `<span class="json-string">"${String(data)}"</span>`;
+  }
+}
+
 export async function handler(req: Request, serveDir: string): Promise<Response> {
   const url = new URL(req.url);
   const pathname = url.pathname;
+
+  const commonStyles = `
+    :root {
+      --background-color: #ffffff;
+      --text-color: #333333;
+      --key-color: #a31515;
+      --string-color: #0451a5;
+      --number-color: #098658;
+      --boolean-color: #0000ff;
+      --null-color: #0000ff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background-color: #1e1e1e;
+        --text-color: #d4d4d4;
+        --key-color: #9cdcfe;
+        --string-color: #ce9178;
+        --number-color: #b5cea8;
+        --boolean-color: #569cd6;
+        --null-color: #569cd6;
+      }
+    }
+
+    body {
+      font-family: monospace;
+      white-space: pre;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 1em;
+    }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .json-key {
+      color: var(--key-color);
+    }
+    .json-string {
+      color: var(--string-color);
+    }
+    .json-number {
+      color: var(--number-color);
+    }
+    .json-boolean {
+      color: var(--boolean-color);
+    }
+    .json-null {
+      color: var(--null-color);
+    }
+  `;
 
   if (pathname === "/") {
     try {
@@ -48,6 +144,25 @@ export async function handler(req: Request, serveDir: string): Promise<Response>
           files.push(dirEntry.name);
         }
       }
+
+      if (req.headers.get("accept")?.includes("text/html")) {
+        const fileLinks = files.map(file => `  <a href="/${file}"><span class="json-string">"${file}"</span></a>`).join(',\n');
+        const htmlBody = `[\n${fileLinks}\n]`;
+        const html = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>JSON/JSON5 Files</title>
+              <style>${commonStyles}</style>
+            </head>
+            <body>${htmlBody}</body>
+          </html>
+        `;
+        return new Response(html, {
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      }
+
       const jsonString = JSON.stringify(files, null, 2);
       return new Response(jsonString, {
         headers: { "content-type": "application/json; charset=utf-8" },
@@ -62,6 +177,24 @@ export async function handler(req: Request, serveDir: string): Promise<Response>
   try {
     const fileContent = await Deno.readTextFile(filePath);
     const jsonData = JSON5.parse(fileContent);
+
+    if (req.headers.get("accept")?.includes("text/html")) {
+      const htmlBody = jsonToHtml(jsonData, 0, false);
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${pathname}</title>
+            <style>${commonStyles}</style>
+          </head>
+          <body>${htmlBody}</body>
+        </html>
+      `;
+      return new Response(html, {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+
     const jsonString = JSON.stringify(jsonData, null, 2);
 
     return new Response(jsonString, {
