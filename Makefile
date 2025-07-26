@@ -2,7 +2,6 @@
 
 # Variables
 APP_NAME = json5-server
-ENTRY_POINT = main.ts
 HOST = localhost
 PORT = 8000
 DIR = .
@@ -10,24 +9,22 @@ DIR = .
 # Default target
 all: build
 
-# Build the executable
 build:
-	deno compile --allow-all --output $(APP_NAME) $(ENTRY_POINT)
+	deno task build
 
-# Run the compiled application
-run: build
-	./$(APP_NAME) --host $(HOST) --port $(PORT) --dir $(DIR)
+install:
+	deno task install
 
 # Start the application using deno run
 start:
-	deno run --allow-all $(ENTRY_POINT) --host $(HOST) --port $(PORT) --dir $(DIR)
+	deno task start --host $(HOST) --port $(PORT) --dir $(DIR)
 
 # Run tests
 test:
-	deno test --allow-read --allow-import
+	deno test --allow-read --allow-import --allow-net
 
 # Clean up build artifacts
 clean:
 	rm -f $(APP_NAME)
 
-.PHONY: all build run start test clean
+.PHONY: all build install start test clean

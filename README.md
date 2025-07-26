@@ -2,27 +2,21 @@
 
 A simple Deno HTTP server to serve `.json` and `.json5` files.
 
+## Installation
+
+```bash
+deno task install
+```
+
 ## Usage
 
 ### Run with Deno
 ```bash
-deno run --allow-net --allow-read main.ts
-```
-
-### Build and Run with Make
-
-To build the executable:
-```bash
-make build
-```
-
-To run the executable:
-```bash
-make run
+deno task start
 ```
 
 ### Options
 Use the `--help` flag to see all available options:
 ```bash
-deno run --allow-net --allow-read main.ts --help
+json5-server --help
 ```

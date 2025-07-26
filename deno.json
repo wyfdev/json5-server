@@ -1,6 +1,11 @@
 {
+  "name": "json5-server",
+  "version": "0.1.0",
+  "exports": "./main.ts",
   "tasks": {
-    "dev": "deno run --allow-net --allow-read main.ts"
+    "start": "deno run --allow-net --allow-read --allow-import main.ts",
+    "install": "deno install --allow-net --allow-read --allow-import -n json5-server main.ts",
+    "build": "deno compile --allow-net --allow-read --allow-import -o json5-server main.ts"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",

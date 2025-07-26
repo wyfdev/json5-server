@@ -2,6 +2,7 @@ import { serve, ConnInfo } from "https://deno.land/std@0.140.0/http/server.ts";
 import JSON5 from "json5";
 import { join } from "https://deno.land/std@0.140.0/path/mod.ts";
 import { parseArgs } from "std/cli";
+import denoJson from "./deno.json" with { type: "json" };
 
 const DEFAULT_PORT = 8000;
 const DEFAULT_HOST = "localhost";
@@ -9,8 +10,8 @@ const DEFAULT_DIR = ".";
 
 const flags = parseArgs(Deno.args, {
   string: ["host", "port", "dir"],
-  boolean: ["help"],
-  alias: { h: "help" },
+  boolean: ["help", "version"],
+  alias: { h: "help", v: "version" },
   default: {
     port: DEFAULT_PORT,
     host: DEFAULT_HOST,
@@ -19,7 +20,7 @@ const flags = parseArgs(Deno.args, {
 });
 
 if (flags.help) {
-  console.log(`JSON5 Server
+  console.log(`JSON5 Server ${denoJson.version}
     
 Usage:
   json5-server [options]
@@ -29,7 +30,13 @@ Options:
   --port <port>       Port to listen on (default: ${DEFAULT_PORT})
   --dir <path>        Directory to serve files from (default: current directory)
   -h, --help          Print this help message
+  -v, --version       Print version information
   `);
+  Deno.exit(0);
+}
+
+if (flags.version) {
+  console.log(denoJson.version);
   Deno.exit(0);
 }
 
